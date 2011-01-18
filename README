@@ -1,0 +1,47 @@
+
+I get easily confused. I have projects littered all over my hard drive that are maintained
+in CVS, SVN, Git, or Mercurial. I get them mixed up and use the wrong command. I use the
+slightly different syntax of one for another. I forget which one's pull also merges and
+which one's doesn't.
+
+To make matters worse, I don't use the advanced features in any of these systems much.
+I just need something to keep track of my changes in such a way that I can share it with
+others. And if I do need more advanced usage (which does happen) then I don't mind dropping
+back to the actual tool.
+
+What this project does is that it provides a simple command line tool — dwim — that does
+what you mean. It detects what kind of working copy you're in and runs the command you
+meant. It is not at all full-featured, and currently only supports a tiny subset of the
+useful commands. I plan to add support for more, but not that much more.
+
+It also assumes that you have already configured details such as what remote repository is
+being used. It assumes you're committing to the main branch. It makes a lot of assumptions.
+If you need more granularity, you're probably better off sticking to the underlying VCS tool.
+
+This command is written in Javascript, it requires node to run. If this annoys you, feel free
+to port it — it shouldn't take more than a few minutes.
+
+Supported commands:
+
+dwim up
+    Gets the changes from the repository and merges them into your working copy.
+
+dwim ci message
+    Commits the changes you have made with the given, compulsory, message, and pushes them to
+    the repository.
+
+dwim add list of files
+    Adds the list of files from the working copy to those being tracked. (Not implemented for
+    CVS yet.)
+
+dwim st
+    Prints out the current status.
+
+What I plan to add:
+
+dwim rm list of files
+
+dwim mv from to
+
+dwim diff oldrev
+

@@ -3,7 +3,7 @@
 // keep it super simple (assume that remote and other such details are already configured):
 //  X up: get the changes and perform update
 //  X ci: commit and push
-//  - add: add recursively
+//  v add: add recursively
 //  - rm: remove
 //  - mv: do whatever dance is needed, though this might be painful in CVS
 //  X st: status
@@ -37,24 +37,26 @@ function runCommand (cmd, ctx, argv) {
     
     if (ctx === "cvs") {
         if (cmd === "up") run = "cvs up";
-        else if (cmd === "ci") run = 'cvs ci "' + msg + '"';
+        else if (cmd === "ci") run = 'cvs ci -m "' + msg + '"';
         else if (cmd === "st") run = "cvs status"; // might be worth parsing the endless output
     }
     else if (ctx === "svn") {
         if (cmd === "up") run = "svn up";
-        else if (cmd === "ci") run = 'svn ci "' + msg + '"';
+        else if (cmd === "ci") run = 'svn ci -m "' + msg + '"';
         else if (cmd === "st") run = "svn status";
+        else if (cmd === "add") run = "svn add " + argv.join(" ");
     }
     else if (ctx === "git") {
         if (cmd === "up") run = "git pull";
-        else if (cmd === "ci") run = ['git commit "' + msg + '"', "git push"];
+        else if (cmd === "ci") run = ['git commit -m "' + msg + '"', "git push"];
         else if (cmd === "st") run = "git status";
         else if (cmd === "add") run = "git add " + argv.join(" ");
     }
     else if (ctx === "hg") {
         if (cmd === "up") run = "hg pull -u";
-        else if (cmd === "ci") run = ['hg commit "' + msg + '"', "hg push"];
+        else if (cmd === "ci") run = ['hg commit -m "' + msg + '"', "hg push"];
         else if (cmd === "st") run = "hg status";
+        else if (cmd === "add") run = "hg add " + argv.join(" ");
     }
     
     if (typeof run === "string") run = [run];
@@ -63,7 +65,7 @@ function runCommand (cmd, ctx, argv) {
 
 function runCommands (commands) {
     var cli = commands.shift();
-    console.log("Running: " + cli);
+    console.log("-> " + cli);
     exec(cli, function (err, stdout, stderr) {
         if (stdout) console.log(stdout);
         if (stderr) console.log("STDERR:\n" + stderr);
