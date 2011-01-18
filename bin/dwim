@@ -1,0 +1,102 @@
+#!/usr/local/bin/node
+
+// keep it super simple (assume that remote and other such details are already configured):
+//  X up: get the changes and perform update
+//  X ci: commit and push
+//  - add: add recursively
+//  - rm: remove
+//  - mv: do whatever dance is needed, though this might be painful in CVS
+//  X st: status
+
+var fs = require("fs"),
+    path = require("path"),
+    sys = require("sys"),
+    exec = require('child_process').exec;
+
+// run
+var context = initContext();
+console.log("Running in context: " + context);
+process.argv.shift(); // node
+process.argv.shift(); // dwim
+var command = process.argv.shift();
+
+runCommand(command, context, process.argv);
+
+function runCommand (cmd, ctx, argv) {
+    var run = null,
+        msg = null;
+    
+    // some validation
+    if (cmd === "ci") {
+        if (!argv.length) {
+            console.log("ci requires a message");
+            process.exit(1);
+        }
+        msg = argv[0];
+    }
+    
+    if (ctx === "cvs") {
+        if (cmd === "up") run = "cvs up";
+        else if (cmd === "ci") run = 'cvs ci "' + msg + '"';
+        else if (cmd === "st") run = "cvs status"; // might be worth parsing the endless output
+    }
+    else if (ctx === "svn") {
+        if (cmd === "up") run = "svn up";
+        else if (cmd === "ci") run = 'svn ci "' + msg + '"';
+        else if (cmd === "st") run = "svn status";
+    }
+    else if (ctx === "git") {
+        if (cmd === "up") run = "git pull";
+        else if (cmd === "ci") run = ['git commit "' + msg + '"', "git push"];
+        else if (cmd === "st") run = "git status";
+        else if (cmd === "add") run = "git add " + argv.join(" ");
+    }
+    else if (ctx === "hg") {
+        if (cmd === "up") run = "hg pull -u";
+        else if (cmd === "ci") run = ['hg commit "' + msg + '"', "hg push"];
+        else if (cmd === "st") run = "hg status";
+    }
+    
+    if (typeof run === "string") run = [run];
+    runCommands(run);
+}
+
+function runCommands (commands) {
+    var cli = commands.shift();
+    console.log("Running: " + cli);
+    exec(cli, function (err, stdout, stderr) {
+        if (stdout) console.log(stdout);
+        if (stderr) console.log("STDERR:\n" + stderr);
+        if (err !== null) console.log("ERROR: " + err);
+        else if (commands.length) runCommands(commands);
+    });
+}
+
+// figure out what context I'm in
+function initContext () {
+    var cwd = process.cwd(),
+        context = "none";
+    if      (hasDir(cwd, "CVS"))                context = "cvs";
+    else if (hasDir(cwd, ".svn"))               context = "svn";
+    else if (hasInSelfOrParent(cwd, ".git"))    context = "git";
+    else if (hasInSelfOrParent(cwd, ".hg"))     context = "hg";
+    return context;
+}
+
+function hasDir (cur, name) {
+    var fullName = path.join(cur, name);
+    try {
+        var stat = fs.statSync(fullName);
+        if (stat.isDirectory()) return true;
+    }
+    catch (e) {}
+    return false;
+}
+
+function hasInSelfOrParent (cur, name) {
+    while (true) {
+        if (hasDir(cur, name)) return true;
+        if (cur === "/") return false;
+        cur = path.dirname(cur);
+    }
+}
