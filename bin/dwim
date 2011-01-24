@@ -48,7 +48,7 @@ function runCommand (cmd, ctx, argv) {
     }
     else if (ctx === "git") {
         if (cmd === "up") run = "git pull";
-        else if (cmd === "ci") run = ['git commit -m "' + msg + '"', "git push"];
+        else if (cmd === "ci") run = ['git commit -am "' + msg + '"', "git push"];
         else if (cmd === "st") run = "git status";
         else if (cmd === "add") run = "git add " + argv.join(" ");
     }
